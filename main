@@ -1,0 +1,65 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.LinkedList;
+class flights
+{
+	String startLocation;
+	String endLocation;
+	int cost;
+	int time;
+	public flights(String city1, String city2, int cost, int time)
+	{
+		startLocation = city1;
+		endLocation = city2;
+		this.cost = cost;
+		this.time = time;
+	}
+}
+
+public class main {
+	
+	public static void readInFile(String fileName, LinkedList<flights> list)
+	{
+		//create a method that reads in a file with:
+		//city1|city2|cost|time
+		//the first line in each file has the number of flights in the file
+		try
+		{
+			BufferedReader readMe = new BufferedReader(new FileReader(fileName));
+			//reads in the number of flights
+			int numberOfFlights = Integer.parseInt(readMe.readLine());
+			String line;
+			String[] attributes;
+			String c1;
+			String c2;
+			int cost;
+			int time;
+			for(int i = 0; i < numberOfFlights; i++)
+			{
+				//deconstruct the line using the character '|'
+				line = readMe.readLine();
+				attributes = line.split("|");
+				c1 = attributes[0];
+				c2 = attributes[1];
+				cost = Integer.parseInt(attributes[2]);
+				time = Integer.parseInt(attributes[3]);
+				
+				flights newFlight = new flights(c1, c2, cost, time);
+				list.add(newFlight);
+			}
+		}
+		catch(Exception e)
+		{
+			System.out.println(e);
+		}
+	}
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		LinkedList<flights> everyFlight = new LinkedList<flights>();
+		String name = "exampleOfFile";
+		readInFile(name, everyFlight);
+		//the file will be read and linked list will have all the flights
+	}
+
+}

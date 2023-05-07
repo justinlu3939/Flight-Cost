@@ -1,31 +1,212 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.LinkedList;
-class flights
+import java.util.Stack;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.io.IOException;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.File;
+
+//the linked list of linked list will hold all possible cities
+//the linked lists will hold the cities each city can travel to
+//the node will just be the city with cost and time pointing to the next city
+
+class flight //the flight is to the destination and has the cost and time
 {
-	String startLocation;
-	String endLocation;
+	String cityName;
 	int cost;
 	int time;
-	public flights(String city1, String city2, int cost, int time)
+
+	public flight(String cityName, int cost, int time)
 	{
-		startLocation = city1;
-		endLocation = city2;
 		this.cost = cost;
+		this.cityName = cityName;
 		this.time = time;
 	}
 }
-
-public class main {
+class Node //the node will store the flight data
+{
+	flight data;
+	Node next;
 	
-	public static void readInFile(String fileName, LinkedList<flights> list)
+	public Node(flight data)
+	{
+		this.data = data;
+		this.next = null;
+	}
+}
+class CityTravelList //the linked list will store all possible flights from one city
+{
+	String cityName;
+	Node head;
+	
+	public CityTravelList(String city)
+	{
+		cityName = city;
+		this.head = null;
+	}
+}
+class LinkedlistOfAllCities
+{
+	LinkedList<CityTravelList> l1;
+	public LinkedlistOfAllCities()
+	{
+		this.l1 = new LinkedList<CityTravelList>();
+	}
+	
+	public void addFlight(String start, String end, int cost, int time)
+	{
+		Node newFlight = new Node(new flight(end, cost, time));
+		boolean foundCity = false;
+		
+		for(CityTravelList cityList : l1) //traverse through the linked list
+		{
+			if(cityList.cityName.equals(start)) //the city already exists in the city
+			{
+				foundCity = true;
+				Node node = cityList.head;
+				
+				if(node == null) //if there isn't any flights listed for the city
+				{
+					cityList.head = newFlight;
+				}
+				else
+				{
+					while(node.next != null)
+					{
+						node = node.next;
+					}
+					node.next = newFlight;
+				}
+			}
+		}
+		if(!foundCity) //the city is not found so create new linked list in the linkedlistofall
+		{
+			CityTravelList cityList = new CityTravelList(start);
+			cityList.head = newFlight;
+			l1.add(cityList);
+		}
+	}
+	//gets the head node of the linked list with the start city
+	public Node getHeadNode(String cityName) {
+        for (CityTravelList cityList : l1) {
+            if (cityList.cityName.equals(cityName)) {
+                return cityList.head;
+            }
+        }
+        return null; // city not found
+    }
+	//go through every list in the linked list and print out the destination cities of every start city
+	//start city should be each of the l1 or head of cityList
+	public void printFlights() {
+	    try{
+	        BufferedWriter writer = new BufferedWriter(new FileWriter("OutputFile", true));
+	        for (CityTravelList cityList : l1) {
+            writer.write(cityList.cityName + ": ");
+
+            Node node = cityList.head;
+            while (node != null) {
+                writer.write("(" + node.data.cityName + ", " + node.data.cost + ", " + node.data.time + ") -> ");
+                node = node.next;
+            }
+
+            writer.write("null\n");
+        }
+        writer.close();
+	    }
+	    catch (IOException e)
+	    {
+	        System.out.println(e);
+	    }
+    }
+    //create a method that will use a stack to find the most optimal flight path to a destination
+    private void printPath(Stack<Node> path) {
+        BufferedWriter writer = null;
+        try{
+            writer = new BufferedWriter(new FileWriter("OutputFile", true));
+            writer.write("[");
+            for (int i = 0; i < path.size(); i++) {
+                writer.write(path.get(i).data.cityName);
+            if (i < path.size() - 1) {
+                writer.write(", ");
+                }
+            }
+            writer.write("] -> ");
+        }
+        catch (IOException e)
+        {
+            System.out.println("Error. Flight doesn't exist.");
+        }
+        finally
+        {
+            if (writer != null) {
+                try {
+                writer.close();
+                } catch (IOException e) {
+                    System.out.println("Error closing file: " + e.getMessage());
+                }
+            }
+        }
+    }
+    public void bestFlightPath(String startCity, String endCity)
+    {
+        //use a stack function that will hold each node
+        //it will keep going until it reaches null or finds the destination
+        Stack<Node> stack = new Stack<Node>();
+        Set<String> visited = new HashSet<String>();
+        
+        //Node start = l1.CityTravelList.head; //probably can just put l1
+        stack.push(getHeadNode(startCity));
+        
+        while(!stack.empty())
+        {
+            Node current = stack.pop();
+            
+            //if the destination is found, print out the path and exit
+            if(current.data.cityName.equals(endCity))
+            {
+                try{
+                    BufferedWriter writer = new BufferedWriter(new FileWriter("OutputFile", true));
+                    writer.write("Path: ");
+                    printPath(stack);
+                    writer.write(current.data.cityName + " (Cost: " + current.data.cost + ", Time: " + current.data.time + ")\n");
+                    writer.close();
+                    return;
+                }
+                catch (IOException e)
+                {
+                    System.out.println(e);
+                }
+            }
+            visited.add(current.data.cityName);
+            
+            Node temp = current.next;
+            while(temp != null)
+            {
+                if(!visited.contains(temp.data.cityName))
+                {
+                    stack.push(temp);
+                }
+                temp = temp.next;
+            }
+        }
+    }
+}
+public class Main {
+	
+	public static void readFlightFile(String flightFile, String planFile)
 	{
 		//create a method that reads in a file with:
 		//city1|city2|cost|time
 		//the first line in each file has the number of flights in the file
+		LinkedlistOfAllCities test = new LinkedlistOfAllCities();
+		//Scanner in = new Scanner(System.in);
 		try
 		{
-			BufferedReader readMe = new BufferedReader(new FileReader(fileName));
+			BufferedReader readMe = new BufferedReader(new FileReader(flightFile));
 			//reads in the number of flights
 			int numberOfFlights = Integer.parseInt(readMe.readLine());
 			String line;
@@ -38,27 +219,78 @@ public class main {
 			{
 				//deconstruct the line using the character '|'
 				line = readMe.readLine();
-				attributes = line.split("|");
+				
+				attributes = line.split("\\|");
+				
 				c1 = attributes[0];
 				c2 = attributes[1];
 				cost = Integer.parseInt(attributes[2]);
 				time = Integer.parseInt(attributes[3]);
 				
-				flights newFlight = new flights(c1, c2, cost, time);
-				list.add(newFlight);
+				test.addFlight(c1, c2, cost, time);
+				
 			}
+			test.printFlights();
+			readPlanFile(planFile, test);
 		}
 		catch(Exception e)
 		{
 			System.out.println(e);
 		}
 	}
+	
+	public static void readPlanFile(String fileName, LinkedlistOfAllCities test)
+	{
+		try
+		{
+			BufferedReader readMe = new BufferedReader(new FileReader(fileName));
+			//reads in the number of flights
+			int numberOfFlights = Integer.parseInt(readMe.readLine());
+			String line;
+			String[] attributes;
+			String c1 = null;
+			String c2 = null;
+			String order;
+			for(int i = 0; i < numberOfFlights; i++)
+			{
+				//deconstruct the line using the character '|'
+				line = readMe.readLine();
+				
+				attributes = line.split("\\|");
+				
+				c1 = attributes[0];
+				c2 = attributes[1];
+				order = attributes[2];
+				test.bestFlightPath(c1, c2);
+			}
+		}
+		catch(Exception e)
+		{
+		    try{
+		        BufferedWriter writer = new BufferedWriter(new FileWriter("OutputFile", true));
+			    writer.write("Error. Flight doesn't exist.\n");
+			    writer.close();
+		    }
+		    catch (IOException ex){
+		        System.out.println(ex);
+		    }
+		}
+	}
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		LinkedList<flights> everyFlight = new LinkedList<flights>();
-		String name = "exampleOfFile";
-		readInFile(name, everyFlight);
+		//this should erase the output file everytime
+		try{
+		    BufferedWriter writer = new BufferedWriter(new FileWriter("OutputFile"));
+		    writer.write("");
+		    writer.close();
+		}
+		catch (IOException e){
+		    System.out.println(2);
+		}
+		
+		String flightFile = "FlightDataFile";
+		String planFile = "PathsToCalculateFile";
+		readFlightFile(flightFile, planFile);
 		//the file will be read and linked list will have all the flights
 	}
 

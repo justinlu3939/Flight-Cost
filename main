@@ -8,9 +8,8 @@ import java.util.Scanner;
 import java.io.IOException;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
-import java.io.File;
 
-//the linked list of linked list will hold all possible cities
+//the linked list of linked list will hold all possible flights
 //the linked lists will hold the cities each city can travel to
 //the node will just be the city with cost and time pointing to the next city
 
@@ -104,16 +103,17 @@ class LinkedlistOfAllCities
 	public void printFlights() {
 	    try{
 	        BufferedWriter writer = new BufferedWriter(new FileWriter("OutputFile", true));
+	        //print out all the flights or nodes in each linked list
 	        for (CityTravelList cityList : l1) {
             writer.write(cityList.cityName + ": ");
 
             Node node = cityList.head;
-            while (node != null) {
+            
+            while (node.next != null) {
                 writer.write("(" + node.data.cityName + ", " + node.data.cost + ", " + node.data.time + ") -> ");
                 node = node.next;
             }
-
-            writer.write("null\n");
+            writer.write("(" + node.data.cityName + ", " + node.data.cost + ", " + node.data.time + ")\n");
         }
         writer.close();
 	    }
@@ -138,6 +138,7 @@ class LinkedlistOfAllCities
         }
         catch (IOException e)
         {
+            //if there are no available flights, print out this message
             System.out.println("Error. Flight doesn't exist.");
         }
         finally
@@ -146,11 +147,13 @@ class LinkedlistOfAllCities
                 try {
                 writer.close();
                 } catch (IOException e) {
-                    System.out.println("Error closing file: " + e.getMessage());
+                    System.out.println(e);
                 }
             }
         }
     }
+    
+    //this method will use a stack to iteratively move through each of the linked lists or cities until the destination is found
     public void bestFlightPath(String startCity, String endCity)
     {
         //use a stack function that will hold each node
@@ -158,7 +161,6 @@ class LinkedlistOfAllCities
         Stack<Node> stack = new Stack<Node>();
         Set<String> visited = new HashSet<String>();
         
-        //Node start = l1.CityTravelList.head; //probably can just put l1
         stack.push(getHeadNode(startCity));
         
         while(!stack.empty())
@@ -197,13 +199,14 @@ class LinkedlistOfAllCities
 }
 public class Main {
 	
+	//this method will read the FlightDataFile
 	public static void readFlightFile(String flightFile, String planFile)
 	{
 		//create a method that reads in a file with:
 		//city1|city2|cost|time
 		//the first line in each file has the number of flights in the file
 		LinkedlistOfAllCities test = new LinkedlistOfAllCities();
-		//Scanner in = new Scanner(System.in);
+
 		try
 		{
 			BufferedReader readMe = new BufferedReader(new FileReader(flightFile));
@@ -231,6 +234,7 @@ public class Main {
 				
 			}
 			test.printFlights();
+			//call the method to read the PathsToCalculateFile
 			readPlanFile(planFile, test);
 		}
 		catch(Exception e)
@@ -239,12 +243,13 @@ public class Main {
 		}
 	}
 	
+	//this method reads the PathsToCalculateFile and then finds the best possible flights
 	public static void readPlanFile(String fileName, LinkedlistOfAllCities test)
 	{
 		try
 		{
 			BufferedReader readMe = new BufferedReader(new FileReader(fileName));
-			//reads in the number of flights
+			//reads in the number of paths
 			int numberOfFlights = Integer.parseInt(readMe.readLine());
 			String line;
 			String[] attributes;
@@ -278,7 +283,9 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		//this should erase the output file everytime
+		//Problem with previous text begin saved even after run time and deletion of output after run time
+		//solution was to clear the file before adding new text to it
+		//cannot put it afterwards as it would erase everything leaving a blank file every run
 		try{
 		    BufferedWriter writer = new BufferedWriter(new FileWriter("OutputFile"));
 		    writer.write("");
